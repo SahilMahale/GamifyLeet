@@ -18,6 +18,11 @@ function App() {
       setQueryName(value); // This will trigger the query
     }
   };
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSubmit();
+    }
+  };
 
   return (
     <div className="max-w-md mx-auto p-6">
@@ -26,6 +31,7 @@ function App() {
           type="text"
           value={value}
           onChange={(e) => setValue(e.target.value)}
+          onKeyDown={handleKeyPress}
           placeholder="Type your message..."
           className="w-full px-4 py-3 pr-12 text-gray-700 bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-sm"
         />
@@ -49,7 +55,7 @@ function App() {
           </svg>
         </button>
       </div>
-      <div className="border-slate-700 text-amber-600">
+      <div className="border-slate-700 text-amber-600 hover:ring-amber-900">
         <h1>{userQuery.data?.greeting}</h1>
       </div>
     </div>

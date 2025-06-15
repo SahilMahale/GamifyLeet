@@ -8,7 +8,7 @@ function App() {
   const [queryName, setQueryName] = useState('');
 
   const userQuery = useQuery({
-    ...trpc.hello.queryOptions({ name: queryName }),
+    ...trpc.user.hello.queryOptions({ name: queryName }),
     enabled: !!queryName, // Only run query when queryName exists
   });
 

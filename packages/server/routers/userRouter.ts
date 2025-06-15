@@ -1,9 +1,6 @@
-import { initTRPC } from "@trpc/server";
+import { t } from "../trpc/trpcServer";
 import { z } from "zod";
-
-const t = initTRPC.create();
-
-export const appRouter = t.router({
+export const userRouter = t.router({
   hello: t.procedure
     .input(z.object({ name: z.string() }))
     .query(({ input }) => {
@@ -21,4 +18,4 @@ export const appRouter = t.router({
   }),
 });
 
-export type AppRouter = typeof appRouter;
+export type UserRouter = typeof userRouter;

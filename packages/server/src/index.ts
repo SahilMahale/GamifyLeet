@@ -1,6 +1,6 @@
 // packages/server/src/index.ts
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
-import { appRouter } from "./router";
+import { appRouter } from "../routers/router";
 import cors from "cors";
 
 const server = createHTTPServer({

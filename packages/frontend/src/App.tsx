@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery,useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { trpc } from "../utils/trpc";
 import "./App.css";
 
@@ -28,11 +28,11 @@ function App() {
     }
   };
 
- const handleClear = () => {
+  const handleClear = () => {
     setValue('');
     setQueryName('');
     // Use queryClient to remove queries
-    queryClient.removeQueries({ 
+    queryClient.removeQueries({
       queryKey: trpc.user.hello.getQueryKey({ name: queryName })
     });
   };
@@ -145,7 +145,7 @@ function App() {
 
       {/* Error State */}
       {userQuery.isError && (
-        <div className="mt-4 p-4 border border-red-300 bg-red-50 rounded-lg">
+        <div className="mt-4 p-4 border-red-300 bg-red-50 rounded-lg">
           <p className="text-red-600">
             Error:{" "}
             {String(userQuery.error?.message || "Failed to fetch submissions")}

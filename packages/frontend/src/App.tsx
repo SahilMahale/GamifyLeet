@@ -1,12 +1,14 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery,useQueryClient } from "@tanstack/react-query";
 import { trpc } from "../utils/trpc";
 import "./App.css";
 
 import type { LeetCodeData } from "../../server/src/types/leetcode";
 function App() {
-  const [value, setValue] = useState("");
-  const [queryName, setQueryName] = useState("");
+  const [value, setValue] = useState<string>("");
+  const [queryName, setQueryName] = useState<string>("");
+
+  const queryClient = useQueryClient();
 
   const userQuery = useQuery({
     ...trpc.user.hello.queryOptions({ name: queryName }),
@@ -26,12 +28,14 @@ function App() {
     }
   };
 
-  const handleClear = () => {
-    setValue("");
-    setQueryName("");
-    userQuery.remove(); // This clears the query cache
+ const handleClear = () => {
+    setValue('');
+    setQueryName('');
+    // Use queryClient to remove queries
+    queryClient.removeQueries({ 
+      queryKey: trpc.user.hello.getQueryKey({ name: queryName })
+    });
   };
-
   const formatTimestamp = (timestamp: string) => {
     return new Date(parseInt(timestamp) * 1000).toLocaleDateString("en-US", {
       year: "numeric",

@@ -55,9 +55,35 @@ function App() {
           </svg>
         </button>
       </div>
-      <div className="border-slate-700 text-amber-600 hover:ring-amber-900">
-        <h1>{userQuery.data?.greeting}</h1>
-      </div>
+      {userQuery.isSuccess && userQuery.data && (
+        <div className="border-slate-700 text-amber-600 hover:ring-amber-900">
+          <h1>{userQuery.data.greeting}</h1>
+          <table className="min-w-full border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border border-gray-300 px-4 py-2 text-left">#</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Problem</th>
+                <th className="border border-gray-300 px-4 py-2 text-left">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {userQuery.data.recent_submissions.map((sub, index) => (
+                <tr key={index} className="hover:bg-gray-50">
+                  <td className="border border-gray-300 px-4 py-2">{index + 1}</td>
+                  <td className="border border-gray-300 px-4 py-2">{sub.title}</td>
+                  <td className={`border border-gray-300 px-4 py-2 ${sub.statusDisplay === 'Accepted'
+                      ? 'text-green-600 font-semibold'
+                      : 'text-red-600'
+                    }`}>
+                    {sub.statusDisplay}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )
+      }
     </div>
   );
 }

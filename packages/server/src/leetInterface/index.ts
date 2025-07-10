@@ -1,4 +1,4 @@
-import { LeetCode, RecentSubmission } from "leetcode-query";
+import { LeetCode } from "leetcode-query";
 
 export async function GetRecentSubmissions(username: string): Promise<any> {
   const leetcode = new LeetCode();

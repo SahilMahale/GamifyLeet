@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { Doc } from "zod/v4/core";
 
 export interface ISubmission extends Document {
   username: string;
@@ -10,6 +11,17 @@ export interface ISubmission extends Document {
   createdAt: Date;
   updatedAt: Date;
 }
+export type SubmissionData = Omit<
+  ISubmission,
+  keyof Document | "createdAt" | "updatedAt"
+>;
+
+export type SubmissionStats = {
+  total: number;
+  accepted: number;
+  wrongAnswer: number;
+  byLanguage: { [key: string]: number };
+};
 
 const submissionSchema = new Schema<ISubmission>({
   username: {

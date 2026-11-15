@@ -33,7 +33,7 @@ function App() {
     setQueryName('');
     // Use queryClient to remove queries
     queryClient.removeQueries({
-      queryKey: trpc.user.hello.getQueryKey({ name: queryName })
+      queryKey: trpc.user.hello.queryKey({ name: queryName })
     });
   };
   const formatTimestamp = (timestamp: string) => {

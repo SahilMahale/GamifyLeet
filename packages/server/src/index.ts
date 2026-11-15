@@ -2,6 +2,7 @@
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import { appRouter } from "../routers/router";
 import cors from "cors";
+import { connectDB } from "./database/connection";
 
 const server = createHTTPServer({
   router: appRouter,
@@ -13,8 +14,10 @@ const server = createHTTPServer({
 });
 
 const PORT = process.env.PORT || 3001;
-server.listen(PORT, () => {
-  console.log(`🚀 tRPC Server running on http://localhost:${PORT}`);
+connectDB().then(() => {
+  server.listen(PORT, () => {
+    console.log(`🚀 tRPC Server running on http://localhost:${PORT}`);
+  });
 });
 
 export type AppRouter = typeof appRouter;

@@ -1,5 +1,4 @@
 import mongoose, { Schema, Document } from "mongoose";
-import { Doc } from "zod/v4/core";
 
 export interface ISubmission extends Document {
   username: string;
@@ -26,7 +25,6 @@ export type SubmissionStats = {
 const submissionSchema = new Schema<ISubmission>({
   username: {
     type: String,
-    unique: true,
     required: true,
     trim: true,
   },
@@ -35,8 +33,8 @@ const submissionSchema = new Schema<ISubmission>({
   timestamp: { type: String, required: true },
   statusDisplay: { type: String, required: true },
   lang: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now() },
-  updatedAt: { type: Date, default: Date.now() },
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
 });
 
 //First Index: Query optimization of frequently used Finds on this kind of data

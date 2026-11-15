@@ -13,10 +13,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "packageManager": "pnpm@10.11.1",
+  "packageManager": "pnpm@12.18.0",
   "devDependencies": {
     "@types/mongoose": "^5.11.97",
-    "@types/node": "^22.15.29",
+    "@types/node": "^26.6.6",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
     "typescript-node": "^0.1.3"

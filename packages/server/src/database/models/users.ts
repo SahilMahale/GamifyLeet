@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from "mongoose";
 export interface IUser extends Document {
   username: string;
   createdAt: Date;
-  deletedAt: Date;
+  deletedAt: Date | null;
   updatedAt: Date;
   lastFetched: Date;
 }
@@ -17,19 +17,19 @@ const userSchema = new Schema<IUser>({
   },
   createdAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
   deletedAt: {
     type: Date,
-    default: Date.now(),
+    default: null,
   },
   updatedAt: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
   lastFetched: {
     type: Date,
-    default: Date.now(),
+    default: Date.now,
   },
 });
 //set updatedAt for the date when a field is updated

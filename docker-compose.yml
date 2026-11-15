@@ -1,23 +1,21 @@
-version: '3.8'
-
 services:
   mongodb:
-    image: bitnami/mongodb:7.0
+    image: docker.io/library/mongo:7
     container_name: gamifyleet-mongodb
     restart: unless-stopped
     environment:
-      - MONGODB_ROOT_USERNAME=root
-      - MONGODB_ROOT_PASSWORD=password123
-      - MONGODB_DATABASE=gamifyleet
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=gamifyleet
     ports:
       - "27017:27017"
     volumes:
-      - mongodb_data:/bitnami/mongodb
+      - mongodb_data:/data/db
     networks:
       - gamifyleet-network
 
   mongo-express:
-    image: mongo-express:latest
+    image: docker.io/library/mongo-express:latest
     container_name: gamifyleet-mongo-express
     restart: unless-stopped
     environment:

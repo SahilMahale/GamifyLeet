@@ -127,6 +127,30 @@ LeetCode's `metaData` describes each signature in language-neutral types:
    - prints **one JSON line per case**: `{"i":0,"out":[0,1],"ms":1}` or `{"i":3,"err":"IndexError ..."}`.
 3. The player's code and the generated runner are sent to Piston as one program (several files where the language needs it).
 
+### Runner I/O contract (every language)
+
+**stdin:** one JSON document holding only the arguments, never the expected values:
+```json
+{ "cases": [ [[2,7,11,15], 9], [[3,3], 6] ] }
+```
+
+**stdout:** one JSON line per case, in any order:
+```text
+{"i":0,"out":[0,1],"ms":0.12}
+{"i":1,"err":"TypeError: Cannot read properties of undefined (reading 'length')"}
+```
+
+- The server keeps only lines that parse as JSON and have an integer `i` plus `out` or `err`. If a case appears more than once, the **first** line wins and later ones are ignored. Player code can print anything, but it never sees `expected`, so a forged line can't turn into a pass.
+- Player logging (`console.log`, `print`, …) goes to **stderr** wherever the language allows it, so it can't corrupt the protocol.
+- A case with no line (crash, timeout or output limit partway through the run) counts as a failure, and its reason comes from the run status (ADR-6).
+- `out` uses the same format as the stored `expected` value (ADR-5): `ListNode` → array, `TreeNode` → level-order array.
+- An `undefined` or `None` return is printed as `null`, never as a missing key.
+- Generated source only contains identifiers that passed `/^[A-Za-z_$][\w$]*$/` (`metaData.name`, parameter names). Anything else makes runner generation fail.
+
+### In-place (`void`) problems
+
+Some problems change their input instead of returning a value (for example `rotate-array`, `sort-colors`). LeetCode marks these with `"return": { "type": "void" }` and adds `"output": { "paramindex": N }` to `metaData`. For these problems the runner prints the mutated `args[N]` as `out`, converted the same way as a normal return value.
+
 ### Per-language notes
 
 | Language | JSON library | Notes | Est. effort |
@@ -157,6 +181,17 @@ Runners only **report outputs**. The API server (TypeScript) compares them with 
   - `floatTolerance`: for example `1e-5`
   - `customChecker`: for problems with several valid answers
 - Hidden `expected` values never enter the sandbox, so player code can't read them.
+
+### How expected values are stored
+`expected` is stored in the **runner's output format**, so the checker only ever compares plain JSON and doesn't need to know about node types:
+- `ListNode` → array of values: `[1,2,3]`, and `[]` for an empty list.
+- `TreeNode` → LeetCode level-order array with `null` for a missing child and trailing `null`s trimmed: `[3,9,20,null,null,15,7]`, and `[]` for an empty tree.
+- `void` problems → the expected state of the mutated parameter.
+
+### Comparison rules
+- Default: deep equality. The verdict is decided by the **first** failing case in stored order (ADR-6).
+- `anyOrder` applies to the **top-level array only**. Nested any-order answers (for example Group Anagrams) need a `custom` checker.
+- An unknown `custom` checker name is an error, never a silent pass.
 
 ### Consequences
 - Problems that accept several valid answers need a hand-written checker or must stay out of the pool (ADR-8).
@@ -197,6 +232,7 @@ Build order: **JS → TS → Go → C++ → C**, with Python added alongside JS.
 A problem enters the daily pool only if all of these are true:
 - Every `metaData` param and return type is in the supported set:
   `integer`, `long`, `double`, `boolean`, `string`, `character`, 1D and 2D arrays of those, `ListNode`, `TreeNode`.
+  A `void` return is allowed when `metaData.output.paramindex` points to a parameter of a supported type (see ADR-4, *In-place problems*).
 - It is **not** a design problem (class with a sequence of method calls, for example `LRUCache`), an interactive problem, or one using graph `Node` or random-pointer lists.
 - It is not a premium problem.
 - Its hidden tests passed curation (ADR-3) and the canonical solution passes them in **every** supported language's runner.
@@ -237,28 +273,37 @@ The power-level theme is inspired by anime transformations. **Tier names and art
 
 ```text
 problems
-  slug (unique)            "two-sum"
+  slug (unique)            "two-sum" (LeetCode title slug, the join key with LeetCodeDataset)
   title, difficulty, tags
-  metaData                 LeetCode signature JSON (ADR-4)
+  content                  statement HTML, for personal use only (see ADR-3 before a public launch)
+  metaData                 LeetCode signature, stored as a parsed object, not the raw JSON string (ADR-4)
   codeSnippets             { langSlug: starterCode }
   example                  { args, expected }   visible to the player
-  hiddenTests              [{ args, expected }] ordered, never sent to the client
+  hiddenTests              [{ args, expected }] ordered simple → edge, select: false
   checker                  { anyOrder?, floatTolerance?, custom? }
   supportedLangs           ["javascript", "typescript", "golang", "cpp", "c", "python3"]
   status                   draft | enabled | retired
 
 dailyPuzzles
-  date (unique, UTC YYYY-MM-DD)
+  date (unique)            "YYYY-MM-DD" string, UTC day
   problemSlug
 
 attempts                   one document per user per day
-  username, date           (unique together)
+  username, date           (unique together); username lower-cased
+  problemSlug              copied in, so the record stays auditable
   tries: [{ lang, code, passed, total, failingCase, verdict, createdAt }]
-  solved, triesUsed
+  solved, triesUsed        triesUsed duplicates tries.length so the 6-try limit is one atomic filter
 
 users (extend existing)
-  currentStreak, bestStreak, powerLevel, tier, lastSolvedDate
+  currentStreak, bestStreak, powerLevel, tier
+  lastSolvedDate           "YYYY-MM-DD" string, the same format as dailyPuzzles.date
 ```
+
+Rules:
+- `hiddenTests` has `select: false` in the Mongoose schema, so it only comes back with an explicit `.select("+hiddenTests")`. Only the judge path asks for it.
+- `expected` values use the runner output format (ADR-5).
+- Dates are UTC calendar days stored as strings, never `Date` objects, which avoids timezone bugs.
+- The 6-try limit is enforced with one atomic update: `findOneAndUpdate({ username, date, triesUsed: { $lt: 6 }, solved: false }, …)`. Parallel submits can't create a 7th try.
 
 ## API (tRPC)
 
@@ -294,12 +339,16 @@ Client ◀── { passed, total, verdict, failingCase, board }
 
 ## Build Plan
 
-1. **Spike:** Piston in `docker-compose.yml`, import a handful of problems, JS runner + server checker, `daily.submit` returning `{ passed, total, failingCase }`.
-2. **Import pipeline:** full dataset to JSON tests + LeetCode metadata, a curation script, pool filtering (ADR-8).
-3. **Python + TS** runners.
-4. **Game loop:** daily selection, attempts, the 6-try limit, streak and power level.
-5. **Frontend:** Monaco editor, try board, hint panel, power-level display.
-6. **Go → C++ → C** runners.
+Tracked as GitHub issues. The title prefix `[P1]`…`[P6]` matches the step below. The P1 issues include step-by-step execution guides.
+
+1. **Spike:** Piston in `docker-compose.yml`, import a handful of problems, JS runner + server checker, `daily.submit` returning `{ passed, total, failingCase }`. Issues #3 (Piston), #4 (`execute()`), #5 (models), #6 (JS runner), #7 (checker), #8 (end-to-end `daily.submit`).
+2. **Import pipeline:** full dataset to JSON tests + LeetCode metadata, a curation script, pool filtering (ADR-8). Issues #9, #10.
+3. **Python + TS** runners. Issues #11, #12.
+4. **Game loop:** daily selection, attempts, the 6-try limit, streak and power level. Issues #13, #14, #15.
+5. **Frontend:** Monaco editor, try board, hint panel, power-level display. Issues #16, #17.
+6. **Go → C++ → C** runners. Issues #18, #19, #20.
+
+Cross-cutting: #21 (runner test suite across languages), #22 (real accounts), #23 (open questions below), #24 (cleanup before a public launch).
 
 ## Open Questions
 

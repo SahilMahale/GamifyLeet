@@ -119,4 +119,6 @@ server code runs in the browser.
 - Server has no `tsconfig.json`; `pnpm build` / `type-check` for the server won't behave as expected.
   (Server code is type-checked indirectly through the frontend's `tsc -b`.)
 
-See `documentation/mongodb-persistence-guide.md` for the full persistence design.
+See `documentation/mongodb-persistence-guide.md` for the full persistence design,
+`documentation/leetcode-api.md` for how we talk to LeetCode, and
+`documentation/daily-challenge-architecture.md` for the daily puzzle game design.

@@ -40,6 +40,7 @@ Requirements: Node `26.10.0` (see `.nvmrc`), pnpm, and Podman + podman-compose (
 ```sh
 nvm use
 pnpm install
+cp packages/server/.env.example packages/server/.env   # .env is git-ignored
 podman compose up -d   # start MongoDB + mongo-express
 pnpm dev               # start the server (:3001) and frontend (:5173) in parallel
 ```
@@ -206,13 +207,20 @@ Say you want `user.stats({ name })` to expose the existing `GetSubmissionStats`:
 
 ### Server: `packages/server`
 
-Runs with `tsx watch src/index.ts` in dev. Config comes from `packages/server/.env`:
+Runs with `tsx watch src/index.ts` in dev. Config comes from `packages/server/.env`, which git
+ignores. Create it from the committed template, `packages/server/.env.example`:
 
 ```
 MONGODB_URI=mongodb://root:password123@127.0.0.1:27017/gamifyleet?authSource=admin
 NODE_ENV=development
-PORT=3001   # optional, defaults to 3001
+# PORT=3001   (optional, defaults to 3001)
 ```
+
+When you add a new setting, add it to `.env.example` too, so other developers know about it.
+
+`packages/server/tsconfig.json` covers `src/`, `routers/` and `trpc/`. `pnpm --filter @gamify-leet/server type-check`
+type-checks the server, and `build` compiles it to `dist/`. The entry point is `dist/src/index.js`, which
+`pnpm --filter @gamify-leet/server start` runs.
 
 | File | What it does |
 |---|---|
@@ -285,10 +293,6 @@ ever add problems that aren't from LeetCode, they get their own slug in the same
 
 ## Known issues (as of this branch)
 
-- The server has no `tsconfig.json`, so `pnpm build` / `type-check` for the server don't behave as
-  expected. Server code is type-checked indirectly through the frontend's `tsc -b`.
-- `packages/server/.env` is committed. It holds only local dev credentials today, but it should be
-  ignored by git, with a committed `.env.example` instead.
 - There's no authentication: `createContext` returns `{}`, and usernames are free text (issue #22).
 - `App.tsx` casts `userQuery.data as LeetCodeData`, which isn't needed because tRPC already infers that type.
 

@@ -173,7 +173,7 @@ function App() {
             </h2>
             <p className="text-gray-600 mt-1">
               Found {(userQuery.data as LeetCodeData).recent_submissions.length}{" "}
-              recent submissions
+              recent submission{(userQuery.data as LeetCodeData).recent_submissions.length == 1 ? "" : "s"}.
             </p>
           </div>
 

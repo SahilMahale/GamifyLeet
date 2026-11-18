@@ -68,8 +68,21 @@ curl -s 'localhost:3001/user.hello?input=%7B%22name%22%3A%22neal_wu%22%7D' | jq 
 Stop with `podman compose down` (`-v` also wipes the data volume). These credentials are for local
 development only.
 
-P1 (issue #3) adds a third service, **Piston**, the code-execution sandbox. It needs rootful
-containers and cgroup v2. That issue has the setup steps.
+P1 (issue #3) adds a third service, **Piston**, the code-execution sandbox. It runs under
+**rootless Podman** (verified), but the host needs cgroup v2 with the
+`cpu cpuset io memory pids` controllers delegated to your user. Issue #3, step 0, has the checks and the
+one-time fix.
+
+### Podman notes
+
+- `podman compose` runs an external provider (`docker-compose` if installed, otherwise
+  `podman-compose`) against Podman's socket. Enable the socket once with
+  `systemctl --user enable --now podman.socket`.
+- Use `podman compose`, not `docker compose`. If the Docker CLI is also installed, `docker compose`
+  talks to a different engine and creates a separate set of containers and volumes.
+- To keep containers running across reboots (`restart: unless-stopped`), run
+  `systemctl --user enable podman-restart.service`. On a server, also run `loginctl enable-linger $USER`.
+- Docker works too, with the same compose file. CI uses Docker (issue #21).
 
 ## Repo layout
 
